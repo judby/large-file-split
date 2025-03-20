@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.udby.blog</groupId>
+        <groupId>com.udby.blog.lfs</groupId>
         <artifactId>large-file-split</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
@@ -17,6 +17,12 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>com.udby.blog.lfs</groupId>
+            <artifactId>simulator</artifactId>
+            <version>${parent.version}</version>
+            <scope>test</scope>
+            <type>war</type>
+        </dependency>
     </dependencies>
-
 </project>
