@@ -42,6 +42,13 @@ limitations under the License.
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>${software.amazon.awssdk.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <!-- TEST dependencies -->
             <dependency>
                 <groupId>org.mockito</groupId>

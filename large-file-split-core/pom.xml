@@ -32,6 +32,11 @@ limitations under the License.
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+        </dependency>
+
         <!-- for wiremock/aws -->
         <dependency>
             <groupId>org.slf4j</groupId>
