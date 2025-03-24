@@ -101,9 +101,7 @@ limitations under the License.
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${maven-compiler-plugin.version}</version>
                     <configuration>
-                        <compilerArgs>
-                            --enable-preview
-                        </compilerArgs>
+                        <enablePreview>true</enablePreview>
                         <proc>full</proc>
                         <release>${java.version}</release>
                     </configuration>
@@ -111,6 +109,9 @@ limitations under the License.
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${maven-surefire-plugin.version}</version>
+                    <configuration>
+                        <argLine>--enable-preview</argLine>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <artifactId>maven-failsafe-plugin</artifactId>
