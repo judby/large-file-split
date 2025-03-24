@@ -85,6 +85,9 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${maven-compiler-plugin.version}</version>
                     <configuration>
+                        <compilerArgs>
+                            --enable-preview
+                        </compilerArgs>
                         <proc>full</proc>
                         <release>${java.version}</release>
                     </configuration>
