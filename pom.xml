@@ -33,11 +33,11 @@ limitations under the License.
         <maven-clean-plugin.version>3.4.1</maven-clean-plugin.version>
         <maven-compiler-plugin.version>3.14.0</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>3.5.2</maven-surefire-plugin.version>
-        <mockito.version>5.15.2</mockito.version>
+        <mockito.version>5.16.1</mockito.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <software.amazon.awssdk.version>2.29.31</software.amazon.awssdk.version>
-        <wiremock.version>3.10.0</wiremock.version>
+        <software.amazon.awssdk.version>2.31.6</software.amazon.awssdk.version>
+        <wiremock.version>3.12.1</wiremock.version>
     </properties>
 
     <dependencyManagement>
