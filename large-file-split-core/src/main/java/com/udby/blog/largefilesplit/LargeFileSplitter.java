@@ -24,9 +24,9 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.StructuredTaskScope;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.channels.FileChannel.MapMode.READ_ONLY;
@@ -98,24 +98,24 @@ public class LargeFileSplitter {
      * @return number of parts created
      */
     public int processInVirtualThreads(FilePartProcessor processor) {
-        try (final var executorService = Executors.newVirtualThreadPerTaskExecutor()) {
-            return process(executorService, processor);
-        }
+        return process(Thread.ofVirtual().factory(), processor);
     }
 
     /**
-     * Split the file using executor service of choice...
+     * Split the file using thread factory of choice...
      *
-     * @param executorService Executor service providing executors for processing file parts
-     * @param processor       FilePartProcessor handling each part of the file
+     * @param threadFactory ThreadFactory to use to create threads for processing file parts
+     * @param processor     FilePartProcessor handling each part of the file
      * @return number of parts created
      */
-    public int process(ExecutorService executorService, FilePartProcessor processor) {
+    public int process(ThreadFactory threadFactory, FilePartProcessor processor) {
         final var size = fileSize();
 
         // current part within all parts of this file...
         int parts = 0;
-        try (final var channel = FileChannel.open(file, READ); final var arena = Arena.ofShared()) {
+        try (final var channel = FileChannel.open(file, READ);
+             final var arena = Arena.ofShared();
+             final var taskScope = new StructuredTaskScope.ShutdownOnFailure(getClass().getSimpleName(), threadFactory)) {
             final var memorySegment = channel.map(READ_ONLY, 0L, size, arena);
 
             // running offset into off-heap memory segment
@@ -129,25 +129,21 @@ public class LargeFileSplitter {
 
                 final var partNumber = parts;
 
-                // Send this part for processing via the executor service
-                executorService.execute(() -> {
-                    try {
-                        processor.processPart(partNumber, partBuffer);
-                    } catch (Exception e) {
-                        exceptionCaught.compareAndSet(null, e);
-                        executorService.shutdownNow();
-                        throw new IllegalStateException("Processing part %d of %s (shutting down execution)".formatted(partNumber, file), e);
-                    }
+                // Send this part for processing via the taskScope
+                taskScope.fork(() -> {
+                    processor.processPart(partNumber, partBuffer);
+                    return null;
                 });
 
                 offset += length;
             }
 
-            executorService.shutdown();
-            executorService.awaitTermination(10, TimeUnit.HOURS);
+            taskScope.join();
+            taskScope.throwIfFailed();
+        } catch (ExecutionException e) {
+            exceptionCaught.set((Exception) e.getCause());
         } catch (Exception e) {
-            exceptionCaught.compareAndSet(null, e);
-            executorService.shutdownNow();
+            exceptionCaught.set(e);
             throw new IllegalStateException("Processing slices (part %d) of %s (shutting down execution)".formatted(parts, file), e);
         }
 
