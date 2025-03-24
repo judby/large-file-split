@@ -20,7 +20,7 @@
         <dependency>
             <groupId>com.udby.blog.lfs</groupId>
             <artifactId>simulator</artifactId>
-            <version>${parent.version}</version>
+            <version>${project.parent.version}</version>
             <scope>test</scope>
             <type>war</type>
         </dependency>
