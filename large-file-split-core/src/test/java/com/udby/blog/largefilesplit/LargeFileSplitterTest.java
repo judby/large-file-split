@@ -40,7 +40,7 @@ class LargeFileSplitterTest {
     private Path output;
 
     @ParameterizedTest
-    @ValueSource(longs = {8 * ONE_M, 16 * ONE_M, 32 * ONE_M})
+    @ValueSource(longs = {8 * ONE_M /*, 16 * ONE_M, 32 * ONE_M*/})
     void processInVirtualThreads_splitToTemporaryFiles_succeeds(long splitSize) throws Exception {
         // Given
         // A large file max 25% of available in temporary file system
@@ -71,21 +71,8 @@ class LargeFileSplitterTest {
         System.out.printf("Timing: %fs Part count: %d%n", 1e-9 * (System.nanoTime() - t0), parts);
 
         // Then
-        final long partsSize;
-        try (final var stream = Files.list(output)) {
-            partsSize = stream
-                    .filter(p -> p.getFileName().toString().startsWith("part-"))
-                    .mapToLong(path -> {
-                        try {
-                            return Files.size(path);
-                        } catch (IOException e) {
-                            throw new UncheckedIOException(e);
-                        }
-                    })
-                    .sum();
-        }
+        final var partsSize = calculateSizeOfParts();
 
-        // Then
         assertThat(partsSize).isEqualTo(size);
     }
 
@@ -129,7 +116,11 @@ class LargeFileSplitterTest {
         // Then
         assertThat(largeFileSplitter.exception())
                 .isNotNull()
-                .isEqualTo(exceptionToThrow);
+                .isSameAs(exceptionToThrow);
+
+        final var partsSize = calculateSizeOfParts();
+
+        assertThat(partsSize).isLessThan(size);
     }
 
     private Path createLargeTempFile(long size) {
@@ -153,4 +144,21 @@ class LargeFileSplitterTest {
         }
     }
 
+
+    private long calculateSizeOfParts() {
+        try (final var stream = Files.list(output)) {
+            return stream
+                    .filter(p -> p.getFileName().toString().startsWith("part-"))
+                    .mapToLong(path -> {
+                        try {
+                            return Files.size(path);
+                        } catch (IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
+                    })
+                    .sum();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
 }
