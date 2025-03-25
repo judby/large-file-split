@@ -120,6 +120,8 @@ class LargeFileSplitterTest {
 
         final var partsSize = calculateSizeOfParts();
 
+        System.out.printf("Transferred %.3fM of %.3fM (%d) bytes%n", partsSize * 1.0 / ONE_M, size * 1.0 / ONE_M, size - partsSize);
+
         assertThat(partsSize).isLessThan(size);
     }
 
