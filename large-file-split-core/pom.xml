@@ -45,13 +45,6 @@ limitations under the License.
         </dependency>
 
         <dependency>
-            <groupId>com.udby.blog.lfs</groupId>
-            <artifactId>simulator</artifactId>
-            <version>${project.parent.version}</version>
-            <scope>test</scope>
-            <type>war</type>
-        </dependency>
-        <dependency>
             <groupId>org.wiremock</groupId>
             <artifactId>wiremock</artifactId>
             <version>${wiremock.version}</version>
