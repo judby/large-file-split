@@ -79,6 +79,7 @@ class LargeFileSplitterTest {
     @Test
     void processInVirtualThreads_exceptionThrownAt100Parts_reportsException() throws Exception {
         // Given
+        final var whenToFail = 100;
         final var exceptionToThrow = new IOException("failed");
 
         // A large file max 25% of available in temporary file system
@@ -96,13 +97,11 @@ class LargeFileSplitterTest {
 
         System.out.printf("Created file (size %.3fM) to be split by %.1fM%n", size * 1.0 / ONE_M, splitSize * 1.0 / ONE_M);
 
-        final var downCount = new AtomicInteger(100);
-
         final var largeFileSplitter = LargeFileSplitter.fromFile(largeFile, splitSize);
 
         // When
         final var parts = largeFileSplitter.processInVirtualThreads((partNumber, byteBuffer) -> {
-            if (downCount.decrementAndGet() == 0) {
+            if (partNumber == whenToFail) {
                 System.out.println("Throwing exception!");
                 throw exceptionToThrow;
             }
