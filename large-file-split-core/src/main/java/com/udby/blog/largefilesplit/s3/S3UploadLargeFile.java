@@ -34,7 +34,6 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
@@ -203,12 +202,9 @@ public class S3UploadLargeFile {
 
             final HttpResponse<String> response;
             try {
-                response = httpClient.sendAsync(httpRequestUpload, HttpResponse.BodyHandlers.ofString())
-                        .get();
-            } catch (InterruptedException | ExecutionException e) {
-                if (e instanceof InterruptedException) {
-                    Thread.currentThread().interrupt();
-                }
+                response = httpClient.send(httpRequestUpload, HttpResponse.BodyHandlers.ofString());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 throw new IllegalStateException(e);
             }
 
