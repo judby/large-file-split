@@ -24,7 +24,6 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.StructuredTaskScope;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicReference;
@@ -61,7 +60,7 @@ public class LargeFileSplitter {
 
     private final Path file;
     private final long partSize;
-    private final AtomicReference<Exception> exceptionCaught = new AtomicReference<>();
+    private final AtomicReference<Throwable> exceptionCaught = new AtomicReference<>();
 
     /**
      * Create LargeFileSplitter given parameters:
@@ -139,9 +138,8 @@ public class LargeFileSplitter {
             }
 
             taskScope.join();
-            taskScope.throwIfFailed();
-        } catch (ExecutionException e) {
-            exceptionCaught.set((Exception) e.getCause());
+            taskScope.exception()
+                    .ifPresent(exceptionCaught::set);
         } catch (Exception e) {
             exceptionCaught.set(e);
             throw new IllegalStateException("Processing slices (part %d) of %s (shutting down execution)".formatted(parts, file), e);
@@ -155,7 +153,7 @@ public class LargeFileSplitter {
      *
      * @return null if all good or the IOException terminating the processing
      */
-    public Exception exception() {
+    public Throwable exception() {
         return exceptionCaught.get();
     }
 
