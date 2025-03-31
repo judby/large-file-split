@@ -45,9 +45,9 @@ import static java.nio.file.StandardOpenOption.READ;
  *         // process part in byteBuffer
  *     });
  *     // check exception status...
- *     if (largeFileSplitter.exception() != null) {
+ *     largeFileSplitter.exception().ifPresent(e -> {
  *         // handle Exception
- *     }
+ *     });
  * }
  * </pre>
  */
