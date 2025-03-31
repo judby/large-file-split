@@ -27,7 +27,6 @@ import java.nio.channels.FileChannel;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.udby.blog.largefilesplit.LargeFileSplitter.ONE_M;
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
@@ -114,6 +113,8 @@ class LargeFileSplitterTest {
         // Then
         assertThat(largeFileSplitter.exception())
                 .isNotNull()
+                .isPresent()
+                .get()
                 .isSameAs(exceptionToThrow);
 
         final var partsSize = calculateSizeOfParts();

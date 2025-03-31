@@ -23,8 +23,8 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.StructuredTaskScope;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.channels.FileChannel.MapMode.READ_ONLY;
@@ -96,24 +96,13 @@ public class LargeFileSplitter {
      * @return number of parts created
      */
     public int processInVirtualThreads(FilePartProcessor processor) {
-        return process(Thread.ofVirtual().factory(), processor);
-    }
-
-    /**
-     * Split the file using thread factory of choice...
-     *
-     * @param threadFactory ThreadFactory to use to create threads for processing file parts
-     * @param processor     FilePartProcessor handling each part of the file
-     * @return number of parts created
-     */
-    public int process(ThreadFactory threadFactory, FilePartProcessor processor) {
         final var size = fileSize();
 
         // current part within all parts of this file...
         int parts = 0;
         try (final var channel = FileChannel.open(file, READ);
              final var arena = Arena.ofShared();
-             final var taskScope = new StructuredTaskScope.ShutdownOnFailure(getClass().getSimpleName(), threadFactory)) {
+             final var taskScope = new StructuredTaskScope.ShutdownOnFailure()) {
             final var memorySegment = channel.map(READ_ONLY, 0L, size, arena);
 
             // running offset into off-heap memory segment
@@ -150,10 +139,10 @@ public class LargeFileSplitter {
     /**
      * If processing is being terminated by an Exception returns the Exception
      *
-     * @return null if all good or the IOException terminating the processing
+     * @return Optional with exception if there was an exception terminating the processing
      */
-    public Throwable exception() {
-        return exceptionCaught.get();
+    public Optional<Throwable> exception() {
+        return Optional.ofNullable(exceptionCaught.get());
     }
 
     private long length(long size, long offset, long blockSize) {
