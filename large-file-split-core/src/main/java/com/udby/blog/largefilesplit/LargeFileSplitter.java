@@ -23,6 +23,7 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -102,14 +103,7 @@ public class LargeFileSplitter {
         }
     }
 
-    /**
-     * Split the file using executor service of choice...
-     *
-     * @param executorService Executor service providing executors for processing file parts
-     * @param processor       FilePartProcessor handling each part of the file
-     * @return number of parts created
-     */
-    public int process(ExecutorService executorService, FilePartProcessor processor) {
+    private int process(ExecutorService executorService, FilePartProcessor processor) {
         final var size = fileSize();
 
         // current part within all parts of this file...
@@ -156,10 +150,10 @@ public class LargeFileSplitter {
     /**
      * If processing is being terminated by an Exception returns the Exception
      *
-     * @return null if all good or the IOException terminating the processing
+     * @return Optional with exception if there was an IOException terminating the processing
      */
-    public Exception exception() {
-        return exceptionCaught.get();
+    public Optional<Exception> exception() {
+        return Optional.ofNullable(exceptionCaught.get());
     }
 
     private long length(long size, long offset, long blockSize) {

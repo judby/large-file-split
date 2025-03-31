@@ -75,7 +75,7 @@ class LargeFileSplitterWiremockTest {
                 }
             });
 
-            assertThat(largeFileSplitter.exception()).isNull();
+            assertThat(largeFileSplitter.exception()).isEmpty();
         }
     }
 

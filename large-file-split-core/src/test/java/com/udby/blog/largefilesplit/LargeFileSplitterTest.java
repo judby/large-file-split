@@ -114,6 +114,8 @@ class LargeFileSplitterTest {
         // Then
         assertThat(largeFileSplitter.exception())
                 .isNotNull()
+                .isPresent()
+                .get()
                 .isSameAs(exceptionToThrow);
 
         final var partsSize = calculateSizeOfParts();
