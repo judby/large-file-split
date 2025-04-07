@@ -257,7 +257,8 @@ public class S3UploadLargeFile {
         var region = regionFrom(System.getProperty("aws.region"));
         if (region == null) {
             region = regionFrom(System.getenv("AWS_REGION"));
-        } else {
+        }
+        if (region == null) {
             region = regionFrom("eu-north-1");
         }
         System.out.printf("Region: %s%n", region);
