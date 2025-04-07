@@ -151,9 +151,7 @@ public class S3UploadLargeFile {
                 }
             }));
 
-            largeFileSplitter.exception().ifPresentOrElse(e -> {
-                        System.out.printf("Spilt failed: %s%n", e);
-                    },
+            largeFileSplitter.exception().ifPresentOrElse(e -> System.out.printf("Spilt failed: %s%n", e),
                     () -> {
                         storageFacilityFacade.completeMultipartUpload(bucket, destination, uploadId, completedParts);
                         System.out.println("Completed multipart upload");
@@ -231,7 +229,7 @@ public class S3UploadLargeFile {
             final var partsStarted = this.startedParts.get();
             final var partsCompleted = this.completedParts.get();
             final var bytesUploaded = this.completedBytes.get();
-            System.out.printf("Parts started: %d completed: %d bytes uploaded: %s%n", partsStarted, partsCompleted, format(bytesUploaded));
+            System.out.printf("Parts started: %d, completed: %d, bytes uploaded: %s%n", partsStarted, partsCompleted, format(bytesUploaded));
         }
     }
 
