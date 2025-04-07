@@ -25,11 +25,11 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.Comparator;
 
-public final class StorageFacilityFacadeAmazonS3 implements StorageFacilityFacade {
+public final class StorageFacilityAmazonS3 implements StorageFacility {
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
 
-    public StorageFacilityFacadeAmazonS3(S3Client s3Client, S3Presigner s3Presigner) {
+    public StorageFacilityAmazonS3(S3Client s3Client, S3Presigner s3Presigner) {
         this.s3Client = s3Client;
         this.s3Presigner = s3Presigner;
     }

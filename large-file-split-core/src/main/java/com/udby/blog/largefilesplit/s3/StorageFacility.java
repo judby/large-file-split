@@ -23,9 +23,9 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import java.time.Duration;
 import java.util.Collection;
 
-public sealed interface StorageFacilityFacade
-        permits StorageFacilityFacadeAmazonS3 {
-    static StorageFacilityFacade forAws(AwsCredentialsProvider credentialsProvider, Region region) {
+public sealed interface StorageFacility
+        permits StorageFacilityAmazonS3 {
+    static StorageFacility forAws(AwsCredentialsProvider credentialsProvider, Region region) {
         final var s3Client = S3Client.builder()
                 .credentialsProvider(credentialsProvider)
                 .region(region)
@@ -35,7 +35,7 @@ public sealed interface StorageFacilityFacade
                 .region(region)
                 .s3Client(s3Client)
                 .build();
-        return new StorageFacilityFacadeAmazonS3(s3Client, s3Presigner);
+        return new StorageFacilityAmazonS3(s3Client, s3Presigner);
     }
 
     boolean checkBucketExists(String bucket);

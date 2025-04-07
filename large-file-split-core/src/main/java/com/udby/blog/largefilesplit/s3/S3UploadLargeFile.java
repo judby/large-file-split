@@ -49,7 +49,7 @@ public class S3UploadLargeFile {
     private static final long SIZE_32M = 32 * ONE_M;
     private static final long SIZE_128M = 128 * ONE_M;
 
-    private final StorageFacilityFacade storageFacilityFacade;
+    private final StorageFacility storageFacility;
     private final int blockSize;
     // FIXME Annoying necessary throttle or HttpClient "dies"...
     private final Semaphore throttle = new Semaphore(24);
@@ -62,11 +62,11 @@ public class S3UploadLargeFile {
     private final AtomicBoolean changed = new AtomicBoolean(true);
 
     public S3UploadLargeFile(int blockSize) {
-        this(StorageFacilityFacade.forAws(DefaultCredentialsProvider.create(), resolveRegion()), blockSize);
+        this(StorageFacility.forAws(DefaultCredentialsProvider.create(), resolveRegion()), blockSize);
     }
 
-    public S3UploadLargeFile(StorageFacilityFacade storageFacilityFacade, int blockSize) {
-        this.storageFacilityFacade = storageFacilityFacade;
+    public S3UploadLargeFile(StorageFacility storageFacility, int blockSize) {
+        this.storageFacility = storageFacility;
         this.blockSize = blockSize;
     }
 
@@ -119,7 +119,7 @@ public class S3UploadLargeFile {
             throw new UncheckedIOException(e);
         }
 
-        if (!storageFacilityFacade.checkBucketExists(bucket)) {
+        if (!storageFacility.checkBucketExists(bucket)) {
             System.out.printf("Bucket %s does not exist%n", bucket);
             return;
         }
@@ -132,7 +132,7 @@ public class S3UploadLargeFile {
 
         System.out.printf("Uploading %s (%.3f MiB %s)%n...to S3 bucket '%s'%n...as '%s'%n", fileToUpload, (1.0 * size / LargeFileSplitter.ONE_M) + 0.0005, mimetype, bucket, destination);
 
-        final var uploadId = storageFacilityFacade.prepareMultipartUpload(bucket, destination, mimetype);
+        final var uploadId = storageFacility.prepareMultipartUpload(bucket, destination, mimetype);
         System.out.println("Prepared multipart upload");
 
         final var t0 = System.nanoTime();
@@ -154,7 +154,7 @@ public class S3UploadLargeFile {
             largeFileSplitter.exception()
                     .ifPresentOrElse(e -> System.out.printf("Spilt failed: %s%n", e),
                             () -> {
-                                storageFacilityFacade.completeMultipartUpload(bucket, destination, uploadId, completedParts);
+                                storageFacility.completeMultipartUpload(bucket, destination, uploadId, completedParts);
                                 System.out.println("Completed multipart upload");
                             });
 
@@ -164,7 +164,7 @@ public class S3UploadLargeFile {
         } finally {
             largeFileSplitter.exception()
                     .ifPresent(_ -> {
-                        storageFacilityFacade.abortMultipartUpload(bucket, destination, uploadId);
+                        storageFacility.abortMultipartUpload(bucket, destination, uploadId);
                         System.out.println("Aborted multipart upload");
                     });
         }
@@ -189,7 +189,7 @@ public class S3UploadLargeFile {
 
         try {
             final var contentMd5 = md5(byteBuffer);
-            final var presignedPutUri = storageFacilityFacade.presignedUploadPartRequest(bucket, key, uploadId, partNumber, contentMd5, Duration.ofMinutes(10L));
+            final var presignedPutUri = storageFacility.presignedUploadPartRequest(bucket, key, uploadId, partNumber, contentMd5, Duration.ofMinutes(10L));
 
             final var byteBufferBodyPublisher = new SimpleByteBufferBodyPublisher(byteBuffer);
 
@@ -278,6 +278,6 @@ public class S3UploadLargeFile {
         }
     }
 
-    record UploadedPart(int partNumber, String eTag) implements StorageFacilityFacade.UploadedPart {
+    record UploadedPart(int partNumber, String eTag) implements StorageFacility.UploadedPart {
     }
 }
