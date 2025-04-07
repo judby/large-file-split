@@ -81,7 +81,7 @@ public class LeaseQueue<T> {
     }
 
     /**
-     * Poll an instance of T from the queue or create a new is queue is empty.
+     * Poll an instance of T from the queue or create a new if queue is empty.
      *
      * @return
      */

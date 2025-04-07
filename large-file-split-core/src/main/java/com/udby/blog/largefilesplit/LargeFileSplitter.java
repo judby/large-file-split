@@ -82,7 +82,7 @@ public class LargeFileSplitter {
      * Create LargeFileSplitter from large file
      *
      * @param file     Path to file to split
-     * @param partSize P    art size
+     * @param partSize Part size
      * @return Instance with sane defaults
      */
     public static LargeFileSplitter fromFile(Path file, long partSize) {

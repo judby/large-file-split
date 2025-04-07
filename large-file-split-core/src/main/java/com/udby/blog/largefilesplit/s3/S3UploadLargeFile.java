@@ -151,21 +151,22 @@ public class S3UploadLargeFile {
                 }
             }));
 
-            if (largeFileSplitter.exception() == null) {
-                storageFacilityFacade.completeMultipartUpload(bucket, destination, uploadId, completedParts);
-                System.out.println("Completed multipart upload");
-                failed = false;
-            } else {
-                System.out.printf("Spilt failed: %s%n", largeFileSplitter.exception());
-            }
+            largeFileSplitter.exception().ifPresentOrElse(e -> {
+                        System.out.printf("Spilt failed: %s%n", e);
+                    },
+                    () -> {
+                        storageFacilityFacade.completeMultipartUpload(bucket, destination, uploadId, completedParts);
+                        System.out.println("Completed multipart upload");
+                    });
 
             final var timingSeconds = 1e-9 * (System.nanoTime() - t0);
             System.out.printf("Timing: %.3fs %s/s%n", timingSeconds, format((long) ((size * 1000L) / (timingSeconds * 1000.0))));
         } finally {
-            if (failed) {
-                storageFacilityFacade.abortMultipartUpload(bucket, destination, uploadId);
-                System.out.println("Aborted multipart upload");
-            }
+            largeFileSplitter.exception()
+                    .ifPresent(_ -> {
+                        storageFacilityFacade.abortMultipartUpload(bucket, destination, uploadId);
+                        System.out.println("Aborted multipart upload");
+                    });
         }
     }
 
