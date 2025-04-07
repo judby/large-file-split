@@ -139,7 +139,7 @@ public class S3UploadLargeFile {
         final var largeFileSplitter = LargeFileSplitter.fromFile(fileToUpload, blockSize);
         final var completedParts = new ArrayList<UploadedPart>((int) (size / blockSize));
         final var lock = new ReentrantLock();
-        boolean failed = true;
+
         try (final var executor = Executors.newVirtualThreadPerTaskExecutor(); final var httpClient = newHttpClient(executor)) {
             largeFileSplitter.processInVirtualThreads(((partNumber, byteBuffer) -> {
                 final var completedPart = uploadPart(httpClient, bucket, destination, uploadId, partNumber, byteBuffer);
@@ -151,14 +151,16 @@ public class S3UploadLargeFile {
                 }
             }));
 
-            largeFileSplitter.exception().ifPresentOrElse(e -> System.out.printf("Spilt failed: %s%n", e),
-                    () -> {
-                        storageFacilityFacade.completeMultipartUpload(bucket, destination, uploadId, completedParts);
-                        System.out.println("Completed multipart upload");
-                    });
+            largeFileSplitter.exception()
+                    .ifPresentOrElse(e -> System.out.printf("Spilt failed: %s%n", e),
+                            () -> {
+                                storageFacilityFacade.completeMultipartUpload(bucket, destination, uploadId, completedParts);
+                                System.out.println("Completed multipart upload");
+                            });
 
             final var timingSeconds = 1e-9 * (System.nanoTime() - t0);
             System.out.printf("Timing: %.3fs %s/s%n", timingSeconds, format((long) ((size * 1000L) / (timingSeconds * 1000.0))));
+            System.out.printf("Timing: %s%n", Duration.ofSeconds((long) timingSeconds));
         } finally {
             largeFileSplitter.exception()
                     .ifPresent(_ -> {
@@ -253,7 +255,7 @@ public class S3UploadLargeFile {
 
     private static Region resolveRegion() {
         var region = regionFrom(System.getProperty("aws.region"));
-        if (region != null) {
+        if (region == null) {
             region = regionFrom(System.getenv("AWS_REGION"));
         } else {
             region = regionFrom("eu-north-1");
@@ -263,7 +265,7 @@ public class S3UploadLargeFile {
     }
 
     private static Region regionFrom(String s) {
-        return s == null ? null : Region.of(s);
+        return s == null || s.isBlank() ? null : Region.of(s);
     }
 
     private String md5(ByteBuffer byteBuffer) {
