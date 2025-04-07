@@ -15,6 +15,7 @@ limitations under the License.
 */
 package com.udby.blog.largefilesplit;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -27,18 +28,21 @@ import java.nio.channels.FileChannel;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.LockSupport;
 
 import static com.udby.blog.largefilesplit.LargeFileSplitter.ONE_M;
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
 import static java.nio.file.StandardOpenOption.WRITE;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Disabled("To be run from IDE mainly")
 class LargeFileSplitterTest {
     @TempDir
     private Path output;
 
     @ParameterizedTest
-    @ValueSource(longs = {8 * ONE_M /*, 16 * ONE_M, 32 * ONE_M*/})
+    @ValueSource(longs = {8 * ONE_M , 16 * ONE_M, 32 * ONE_M})
     void processInVirtualThreads_splitToTemporaryFiles_succeeds(long splitSize) throws Exception {
         // Given
         // A large file max 25% of available in temporary file system
@@ -122,6 +126,52 @@ class LargeFileSplitterTest {
         System.out.printf("Transferred %.3fM of %.3fM (%d) bytes%n", partsSize * 1.0 / ONE_M, size * 1.0 / ONE_M, size - partsSize);
 
         assertThat(partsSize).isLessThan(size);
+    }
+
+    @Test
+    void processInVirtualThreadsJustParking_exceptionThrownAt100Parts_reportsException() throws Exception {
+        // Given
+        final var whenToFail = 100;
+        final var exceptionToThrow = new IOException("failed");
+
+        // A large file max 25% of available in temporary file system
+        final var fileStore = fileStore();
+
+        final var usableSpace = fileStore.getUsableSpace();
+        final var twentyFivePercent = usableSpace / 4;
+        // Size of actual file inspiring this implementation
+        final var actualFileSize = 9841183379L;
+        final var size = Math.min(actualFileSize, twentyFivePercent);
+
+        final var largeFile = createLargeTempFile(size);
+
+        final var splitSize = 32 * ONE_M;
+
+        System.out.printf("Created file (size %.3fM) to be split by %.1fM%n", size * 1.0 / ONE_M, splitSize * 1.0 / ONE_M);
+
+        final var largeFileSplitter = LargeFileSplitter.fromFile(largeFile, splitSize);
+
+        final var completedParts = new AtomicInteger();
+        // When
+        final var parts = largeFileSplitter.processInVirtualThreads((partNumber, byteBuffer) -> {
+            if (partNumber == whenToFail) {
+                System.out.println("Throwing exception!");
+                throw exceptionToThrow;
+            }
+
+            completedParts.incrementAndGet();
+
+            LockSupport.park();
+        });
+
+        // Then
+        assertThat(largeFileSplitter.exception())
+                .isNotNull()
+                .isPresent()
+                .get()
+                .isSameAs(exceptionToThrow);
+
+        System.out.println(completedParts);
     }
 
     private Path createLargeTempFile(long size) {
