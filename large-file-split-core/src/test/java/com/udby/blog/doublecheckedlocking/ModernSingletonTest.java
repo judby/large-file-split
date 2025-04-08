@@ -13,6 +13,7 @@ class ModernSingletonTest {
         final var availableProcessors = Runtime.getRuntime().availableProcessors();
         final var threadCount = availableProcessors > 1 ? availableProcessors - 1 : availableProcessors;
         final var threadFactory = Thread.ofPlatform().factory();
+        final var wait = new CountDownLatch(threadCount);
         final var go = new CountDownLatch(1);
 
         try (final var scope = new StructuredTaskScope.ShutdownOnSuccess<VeryExpensiveResource>("demo", threadFactory)) {
@@ -20,10 +21,12 @@ class ModernSingletonTest {
                 final var id = i + 1;
                 scope.fork(() -> {
                     System.out.printf("Started %d and waiting...%n", id);
+                    wait.countDown();
                     go.await();
                     return ModernSingleton.getInstance();
                 });
             }
+            wait.await();
             go.countDown();
             scope.join();
         }

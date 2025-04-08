@@ -13,17 +13,20 @@ class StableValueSingletonTest {
         final var availableProcessors = Runtime.getRuntime().availableProcessors();
         final var threadCount = availableProcessors > 1 ? availableProcessors - 1 : availableProcessors;
         final var threadFactory = Thread.ofPlatform().factory();
+        final var wait = new CountDownLatch(threadCount);
         final var go = new CountDownLatch(1);
 
         try (final var scope = new StructuredTaskScope.ShutdownOnSuccess<VeryExpensiveResource>("demo", threadFactory)) {
             for (int i = 0; i < threadCount; i++) {
                 final var id = i + 1;
                 scope.fork(() -> {
+                    wait.countDown();
                     System.out.printf("Started %d and waiting...%n", id);
                     go.await();
                     return StableValueSingleton.getInstance();
                 });
             }
+            wait.await();
             go.countDown();
             scope.join();
         }
