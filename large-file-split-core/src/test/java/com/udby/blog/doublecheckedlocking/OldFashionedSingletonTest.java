@@ -27,7 +27,9 @@ class OldFashionedSingletonTest {
                     return OldFashionedSingleton.getInstance();
                 });
             }
+            // Wait until all threads are started
             wait.await();
+            // Then get them going
             go.countDown();
             scope.join();
         }
